@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini CRM | Client Lead Management</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f9; color: #222; }
+  header { background: #1f2937; color: white; text-align: center; padding: 30px 20px; }
+  header h1 { margin: 0; }
+  .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+  .form-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 30px; }
+  .form-box input, .form-box select, .form-box textarea { width: 100%; padding: 10px; margin: 6px 0 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  .form-box button { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; }
+  .form-box button:hover { background: #1d4ed8; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #1f2937; color: white; }
+  .status { padding: 4px 10px; border-radius: 12px; font-size: 0.85em; color: white; }
+  .status-new { background: #f59e0b; }
+  .status-contacted { background: #3b82f6; }
+  .status-converted { background: #10b981; }
+  select.status-select { width: auto; padding: 5px; margin: 0; }
+  .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  .notes-box { width: 90%; padding: 5px; margin: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mini CRM — Client Lead Management System</h1>
+</header>
+
+<div class="container">
+
+  <div class="form-box">
+    <h2>Add New Lead</h2>
+    <input type="text" id="name" placeholder="Client Name">
+    <input type="email" id="email" placeholder="Client Email">
+    <input type="text" id="source" placeholder="Lead Source (e.g. Website, Instagram)">
+    <button onclick="addLead()">Add Lead</button>
+  </div>
+
+  <h2>Leads</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Source</th>
+        <th>Status</th>
+        <th>Notes</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="leadTable"></tbody>
+  </table>
+
+</div>
+
+<script>
+  let leads = JSON.parse(localStorage.getItem('leads')) || [];
+
+  function saveLeads() {
+    localStorage.setItem('leads', JSON.stringify(leads));
+    renderLeads();
+  }
+
+  function addLead() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const source = document.getElementById('source').value.trim();
+    if (!name || !email) { alert('Please enter name and email'); return; }
+    leads.push({ id: Date.now(), name, email, source, status: 'new', notes: '' });
+    document.getElementById('name').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('source').value = '';
+    saveLeads();
+  }
+
+  function updateStatus(id, status) {
+    leads = leads.map(l => l.id === id ? { ...l, status } : l);
+    saveLeads();
+  }
+
+  function updateNotes(id, notes) {
+    leads = leads.map(l => l.id === id ? { ...l, notes } : l);
+    localStorage.setItem('leads', JSON.stringify(leads));
+  }
+
+  function deleteLead(id) {
+    leads = leads.filter(l => l.id !== id);
+    saveLeads();
+  }
+
+  function renderLeads() {
+    const table = document.getElementById('leadTable');
+    table.innerHTML = '';
+    leads.forEach(lead => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${lead.name}</td>
+        <td>${lead.email}</td>
+        <td>${lead.source}</td>
+        <td>
+          <select class="status-select" onchange="updateStatus(${lead.id}, this.value)">
+            <option value="new" ${lead.status==='new'?'selected':''}>New</option>
+            <option value="contacted" ${lead.status==='contacted'?'selected':''}>Contacted</option>
+            <option value="converted" ${lead.status==='converted'?'selected':''}>Converted</option>
+          </select>
+        </td>
+        <td><input class="notes-box" type="text" value="${lead.notes}" onchange="updateNotes(${lead.id}, this.value)" placeholder="Add note..."></td>
+        <td><button class="delete-btn" onclick="deleteLead(${lead.id})">Delete</button></td>
+      `;
+      table.appendChild(row);
+    });
+  }
+
+  renderLeads();
+</script>
+
+</body>
+</html>
